@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<push-response>
+    <tid>the transaction id</tid>
+    <status-id>the status of the request</status-id>
+</push-response>
