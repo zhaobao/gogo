@@ -1,37 +1,42 @@
 package main
 
 import (
-	"github.com/gocolly/colly"
 	"fmt"
-	"strconv"
-	"regexp"
-	"os"
+	"github.com/gocolly/colly"
 	"log"
+	"os"
+	"regexp"
+	"strconv"
 	"time"
 )
 
 func main() {
+	// file logger
 	f, err := os.OpenFile("./"+string(os.PathSeparator)+"log"+string(os.PathSeparator)+"output.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err == nil {
 		log.SetFlags(log.Ldate | log.Ltime)
 		log.SetOutput(f)
 	}
 	defer f.Close()
+	// new collector
 	c := colly.NewCollector(
 		colly.AllowedDomains("www.mzitu.com"),
 		colly.UserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36"),
 	)
+	// limit configure
 	c.Limit(&colly.LimitRule{
-		DomainGlob: "*",
+		DomainGlob:  "*",
 		Parallelism: 10,
-		Delay: time.Second * 2,
-		})
+		Delay:       time.Second * 2,
+	})
+	// parse index
 	c.OnHTML(`#pins a`, func(element *colly.HTMLElement) {
 		href := element.Attr("href")
 		if element.Request.URL.Path == "/" {
 			go element.Request.Visit(href)
 		}
 	})
+	// get pages
 	c.OnHTML(`div.pagenavi`, func(element *colly.HTMLElement) {
 		path := element.Request.URL.Path
 		re := regexp.MustCompile(`^/(\d+)$`)
@@ -48,6 +53,7 @@ func main() {
 			}
 		}
 	})
+	// get item
 	c.OnHTML(`div.main-image p img`, func(element *colly.HTMLElement) {
 		if len(element.Request.Ctx.Get("_meta")) > 0 {
 			re := regexp.MustCompile(`^/(\d+)`)
